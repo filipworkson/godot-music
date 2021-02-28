@@ -24,6 +24,7 @@ private:
 	float        mMidiSpeed;
 	File        *mTmlFile;
 	tml_stream   mTmlStream;
+	bool         loop_mode;
 
 public:
 	static void _register_methods();
@@ -68,7 +69,9 @@ public:
     float channel_get_pitchrange(godot_int inChannel);
     float channel_get_tuning(godot_int inChannel);
 
-	void play_midi(String inMidiFileName);
+	void play_midi(String inMidiFileName, bool loop);
+	bool finished();
+	void loop(bool l);
 
 	PoolVector2Array get_buffer(godot_int inSize);
 };

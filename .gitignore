@@ -17,5 +17,4 @@ sound_fonts/piano.sf2
 
 gdnative/bin/win64/libtsf.exp
 gdnative/bin/win64/libtsf.lib
-gdnative/godot-cpp
 *.obj

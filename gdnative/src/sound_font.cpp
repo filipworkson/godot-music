@@ -40,6 +40,8 @@ void SoundFont::_register_methods() {
 	register_method("channel_get_tuning", &SoundFont::channel_get_tuning);
  
  	register_method("play_midi", &SoundFont::play_midi);
+	register_method("finished", &SoundFont::finished);
+	register_method("loop", &SoundFont::loop);
 
 	register_method("get_buffer", &SoundFont::get_buffer);
 
@@ -87,6 +89,7 @@ void SoundFont::_init() {
 	mTsfStream.skip = skipTsfFile;
 	mTml = NULL;
 	mTmlCurrent = NULL;
+	loop_mode = false;
 	mTmlFile = File::_new();
 	mTmlStream.data = mTmlFile;
 	mTmlStream.read = readTsfFile;
@@ -323,24 +326,45 @@ float SoundFont::channel_get_tuning(godot_int inChannel) {
 	return tsf_channel_get_tuning(mTsf, inChannel);
 }
 
-void SoundFont::play_midi(String inMidiFileName) {
+void SoundFont::play_midi(String inMidiFileName, bool l) {
 	if (mTml != NULL) {
 		tml_free(mTml);
 		mTml = NULL;
 		mTmlCurrent = NULL;
+		l = false;
 		mTmlFile->close();
 	}
 	if (mTmlFile->open(inMidiFileName, File::READ) == Error::OK) {
 		mTml = tml_load(&mTmlStream);
 		mTmlCurrent = mTml;
 		mTmlTime = 0.0;
+		loop_mode = l;
 	}
+}
+
+bool SoundFont::finished() {
+	if (mTmlCurrent == NULL) {
+		return true;
+	}
+	if (mTmlCurrent != NULL && mTmlCurrent->next == NULL) {
+		return true;
+	}
+	return false;
+}
+
+void SoundFont::loop(bool l) {
+	loop_mode = l;
 }
 
 PoolVector2Array SoundFont::get_buffer(godot_int inSize) {
 	PoolVector2Array theBuffer;
 	
 	if (inSize > 0 && mTsf != NULL) {
+		if (mTmlCurrent == NULL && loop_mode == true) {
+			note_off_all();
+			mTmlCurrent = mTml;
+			mTmlTime = 0.0;
+		}
 		theBuffer.resize(inSize);
 		Vector2 *theData = theBuffer.write().ptr();
 		if (mTmlCurrent != NULL) {
